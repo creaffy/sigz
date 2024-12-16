@@ -1,66 +1,62 @@
 # sigz
 
-Modern C++ Internal Memory Scanner For Windows.
+C++ Internal Memory Scanning Library for Windows.
+
+## Notes
+
+-   This is really a minimal library with only basic functionality.
+-   Please report any bugs <3
+-   `sigz::scan_unsafe()` does not check page protection.
+-   If a pattern spans over more than one region, it won't be found.
+-   `sigz::scan()` checks page protection, `sigz::scan_image()` does not. It trusts the PE headers.
+-   When a scan fails, nullptr or an empty vector is returned. I found using std::expected and other error handling annoying to work with so I just got rid of it entirely lol.
+-   Pattern validity is not checked. You need to make sure everything is right before using a pattern or else you may crash.
+-   'first' and 'last' mean the range [first, last) will be scanned.
+-   When passing structures into `sigz::make::value<T>()` remember about paddings and vtables.
 
 ## Usage
 
-### Scanning Module
+### Patterns
 
-Multiple results
+Patterns are just `std::vector<int>`'s. They can contain values between 0x00 and 0xFF. Use `sigz::WILDCARD` (or just -1) for wildcard. <br/>
+There are helper functions for generating patterns in the `sigz::make` namespace.
 
-```cpp
-sigz::scan_image<sigz::vec>("ntdll.dll", sigz::make_sig<sigz::string>("MZ"), 5);
-```
+### Scan Functions
 
-Single result
+-   `sigz::scan_unsafe(first, last, pattern, limit = sigz::NO_LIMIT)` <br/>
+    Scans range without checking page protection. Returns a vector of results.
 
-```cpp
-sigz::scan_image<sigz::ptr>("ntdll.dll", sigz::make_sig<sigz::value>(1llu));
-sigz::scan_image_first("ntdll.dll", sigz::make_sig<sigz::ida>("00 01 ? ? 02 03"));
-```
+-   `sigz::scan_unsafe_first(first, last, pattern)` <br/>
+    Scans range without checking page protection. Returns the first match.
 
-### Scanning Range
+-   `sigz::scan(first, last, pattern, limit = sigz::NO_LIMIT)` <br/>
+    Scans range and checks page protection. Skips unreadable memory regions. Returns a vector of results.
 
-Multiple results
+-   `sigz::scan_first(first, last, pattern)` <br/>
+    Scans range and checks page protection. Skips unreadable memory regions. Returns the first match.
 
-```cpp
-sigz::scan<sigz::vec>(first, last, sigz::make_sig<sigz::x64dbg>("00 01 ?? ?? 02 03"), 7);
-```
+-   `sigz::scan_image(name, pattern, limit = sigz::NO_LIMIT)` <br/>
+    Scans given module. Trusts that the entire module is readable. Returns a vector of results.
 
-Single result
+-   `sigz::scan_image_first(name, pattern)` <br/>
+    Scans given module. Trusts that the entire module is readable. Returns the first match.
 
-```cpp
-sigz::scan<sigz::ptr>(first, last, sigz::make_sig<sigz::x64dbg>("00 01 ?? ?? 02 03"));
-sigz::scan_first(first, last, sigz::make_sig<sigz::string>(L"abcdef"));
-```
+-   `sigz::scan_process(pattern, limit = sigz::NO_LIMIT)` <br/>
+    Scans entire address space of the current process. Checks page protection. Returns a vector of results.
 
-## Helpers
+-   `sigz::scan_process_first(pattern)` <br/>
+    Scans entire address space of the current process. Checks page protection. Returns the first match.
 
-Scan functions use std::vector<int16_t> as the pattern. All elements must be in the [0x00, 0xFF] range or be equal to -1 (wildcard). To make your life easier, sigz provides helper functions for generating said vectors.
+### Helper Functions
 
-IDA style patterns. Uses "?" for wildcards.
+-   `sigz::make::ida(pattern)` <br/>
+    Generates a pattern based on a string signature. Uses "?" as a wildcard. Example: `00 ? 0a af 01 ? 54`
 
-```cpp
-sigz::make_sig<sigz::ida>("0A B8 8A ? ? FA");
-```
+-   `sigz::make::x64dbg(pattern)` <br/>
+    Generates a pattern based on a string signature. Uses "??" as a wildcard. Example: `00 ?? 0a af 01 ?? 54`
 
-x64dbg style patterns. Uses "??" for wildcards.
+-   `sigz::make::string(pattern)` <br/>
+    Generates a pattern based on a string. There are versions of this function for both strings and wstrings.
 
-```cpp
-sigz::make_sig<sigz::x64dbg>("0A B8 8A ?? ?? FA");
-```
-
-Signatures generated from a string (or a wstring). Second arg indicates whether or not null byte will be addded. It's set to true by default.
-
-```cpp
-sigz::make_sig<sigz::string>("hi");
-sigz::make_sig<sigz::string>(L"hi", false);
-```
-
-Signatures generated from structures. It's just a template so it supports everything.
-
-```cpp
-sigz::make_sig<sigz::value>(true);
-sigz::make_sig<sigz::value>(69llu);
-sigz::make_sig<sigz::value>(some_type_t{ 0, 0, 1, 2 });
-```
+-   `sigz::make::value<T>(data)` <br/>
+    Generates a pattern based on the structure of T in memory. Remember about paddings and vtables.
