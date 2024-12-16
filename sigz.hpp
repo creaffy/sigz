@@ -44,7 +44,7 @@ namespace sigz {
         std::size_t _Limit
     ) {
         std::vector<void*> _Results{};
-        for (std::uint8_t* _Ptr = _First; _Ptr < _Last - _Pattern.size(); ++_Ptr) {
+        for (std::uint8_t* _Ptr = _First; _Ptr < _Last - _Pattern.size() + 1; ++_Ptr) {
             bool _Found = true;
             for (std::size_t i = 0; i < _Pattern.size(); ++i) {
                 if (_Pattern[i] == WILDCARD || _Ptr[i] == _Pattern[i]) {
@@ -114,7 +114,7 @@ namespace sigz {
             bool _Null = true
             ) const {
             auto _First = reinterpret_cast<const std::int8_t*>(_String.data());
-            auto _Last = reinterpret_cast<const std::int8_t*>(_String.data()) + _String.length();
+            auto _Last = reinterpret_cast<const std::int8_t*>(_String.data() + _String.length());
             return std::vector<std::int16_t>(_First, _Null ? _Last + 1 : _Last);
         }
     };
