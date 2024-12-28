@@ -16,7 +16,7 @@ namespace sigz {
         void* last,
         const std::vector<int>& pattern
     ) {
-        for (char* ptr = reinterpret_cast<char*>(first); ptr <= reinterpret_cast<char*>(last) - pattern.size(); ++ptr) {
+        for (unsigned char* ptr = reinterpret_cast<unsigned char*>(first); ptr < reinterpret_cast<unsigned char*>(last) - pattern.size() + 1; ++ptr) {
             bool found = true;
             for (size_t i = 0; i < pattern.size(); ++i) {
                 if (pattern[i] == sigz::WILDCARD || ptr[i] == pattern[i])
@@ -56,7 +56,7 @@ namespace sigz {
     ) {
         std::vector<MEMORY_BASIC_INFORMATION> regions{};
         MEMORY_BASIC_INFORMATION region_info{};
-        for (char* ptr = reinterpret_cast<char*>(first); ptr <= reinterpret_cast<char*>(last); ++ptr) {
+        for (char* ptr = reinterpret_cast<char*>(first); ptr < reinterpret_cast<char*>(last); ++ptr) {
             if (!VirtualQuery(ptr, &region_info, sizeof(region_info)))
                 return {};
             regions.push_back(region_info);
