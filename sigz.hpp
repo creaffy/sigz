@@ -7,6 +7,9 @@
 // Read the README please!
 // https://github.com/creaffy/sigz
 
+#define sigz_min(a, b) (((a) < (b)) ? (a) : (b))
+#define sigz_max(a, b) (((a) > (b)) ? (a) : (b))
+
 namespace sigz {
     constexpr inline int WILDCARD = -1;
     constexpr inline int NO_LIMIT = -1;
@@ -71,7 +74,7 @@ namespace sigz {
                 continue;
             void* region_first = region.BaseAddress;
             void* region_last = reinterpret_cast<char*>(region.BaseAddress) + region.RegionSize;
-            auto region_results = sigz::scan_unsafe(max(first, region_first), min(last, region_last), pattern, remaining);
+            auto region_results = sigz::scan_unsafe(sigz_max(first, region_first), sigz_min(last, region_last), pattern, remaining);
             for (void* ptr : region_results)
                 results.push_back(ptr);
             if (region_results.size() != remaining)
@@ -159,8 +162,8 @@ namespace sigz {
             std::wstring_view str,
             bool null = true
         ) {
-            const char* first = reinterpret_cast<const char*>(str.begin()._Unwrapped());
-            const char* last = reinterpret_cast<const char*>(str.end()._Unwrapped());
+            const char* first = reinterpret_cast<const char*>(&*str.begin());
+            const char* last = reinterpret_cast<const char*>(&*str.end());
             return std::vector<int>(first, null ? last + 2 : last);
         }
 
